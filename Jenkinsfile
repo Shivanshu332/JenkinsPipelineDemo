@@ -64,7 +64,7 @@ pipeline {
                 script {
                     // Run terraform plan
                     echo 'Running terraform plan...'
-                    sh 'terraform plan -out=tfplan'
+                    sh 'terraform plan -out=tfplan >> /dev/null'
                     sh 'terraform show -no-color tfplan'
                 }
             }
