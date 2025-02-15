@@ -4,6 +4,10 @@ pipeline {
             label 'docker-terraform-aws-agent'
         }
     }
+
+    triggers {
+        pollSCM '* * * * *'
+    }
     
     parameters {
         string(name: 'REPO_URL', defaultValue: 'https://github.com/Shivanshu332/terraformAWSdemo.git', description: 'GitHub repository URL')
