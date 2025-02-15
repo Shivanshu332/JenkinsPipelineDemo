@@ -69,5 +69,21 @@ pipeline {
                 }
             }
         }
+        stage('Approval') {
+            steps {
+                script {
+                    input message: 'Approve Terraform Apply?', ok: 'Proceed'
+                }
+            }
+        }
+
+        stage('Terraform Apply') {
+            steps {
+                script {
+                    echo 'Applying Terraform changes...'
+                    sh 'terraform apply -auto-approve -no-color tfplan'
+                }
+            }
+        }
     }
 }
