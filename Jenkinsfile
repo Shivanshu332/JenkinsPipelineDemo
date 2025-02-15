@@ -12,7 +12,7 @@ pipeline {
     parameters {
         string(name: 'REPO_URL', defaultValue: 'https://github.com/Shivanshu332/terraformAWSdemo.git', description: 'GitHub repository URL')
         string(name: 'BRANCH', defaultValue: 'test', description: 'Branch name to checkout')
-		string(name: 'AWS_Region', defaultValue: 'eu-west-1', description: 'Default AWS region')
+		string(name: 'AWS_Region', defaultValue: 'ap-south-1', description: 'Default AWS region')
     }
 
     environment {
