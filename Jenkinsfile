@@ -54,7 +54,8 @@ pipeline {
                 script {
                     // Run terraform init to initialize the Terraform working directory
                     echo 'Running terraform init...'
-                    sh 'terraform init'
+                    sh 'terraform plan -out=tfplan'
+                    sh 'terraform show -no-color tfplan'
                 }
             }
         }
