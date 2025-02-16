@@ -61,6 +61,7 @@ pipeline {
         }
         
         stage('Terraform Plan') {
+            when { expression { params.Terraform_Destroy == 'false' } }
             steps {
                 script {
                     // Run terraform plan
@@ -71,6 +72,7 @@ pipeline {
             }
         }
         stage('Approval') {
+            when { expression { params.Terraform_Destroy == 'false' } }
             steps {
                 script {
                     timeout(time:15, unit: 'MINUTES')
@@ -80,6 +82,7 @@ pipeline {
         }
 
         stage('Terraform Apply') {
+            when { expression { params.Terraform_Destroy == 'false' } }
             steps {
                 script {
                     echo 'Applying Terraform changes...'
