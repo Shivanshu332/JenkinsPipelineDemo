@@ -97,8 +97,8 @@ pipeline {
             steps{
                 script {
                     echo 'Generating Terraform destroy plan...'
-                    sh 'terraform plan -destroy -out=tfplandestory -no-color > /dev/null 2>&1'
-                    sh 'terraform show -no-color tfplandestory'
+                    sh 'terraform plan -destroy -out=tfplandestroy -no-color > /dev/null 2>&1'
+                    sh 'terraform show -no-color tfplandestroy'
                 }
             }
         }
