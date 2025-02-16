@@ -71,12 +71,13 @@ pipeline {
                 }
             }
         }
-        stage('Approval') {
+        stage('Approval Apply') {
             when { expression { params.Terraform_Destroy == 'false' } }
             steps {
                 script {
-                    timeout(time:15, unit: 'MINUTES')
+                    timeout(time:15, unit: 'MINUTES'){
                     input message: 'Approve Terraform Apply?', ok: 'Proceed'
+                    }
                 }
             }
         }
