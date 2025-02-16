@@ -13,6 +13,7 @@ pipeline {
         string(name: 'REPO_URL', defaultValue: 'https://github.com/Shivanshu332/terraformAWSdemo.git', description: 'GitHub repository URL')
         string(name: 'BRANCH', defaultValue: 'test', description: 'Branch name to checkout')
 		string(name: 'AWS_Region', defaultValue: 'ap-south-1', description: 'Default AWS region')
+        choice(name: 'Terraform_Destroy', choices: ['false', 'true'], description: 'Select if you want to destroy terraform resources')
     }
 
     environment {
@@ -72,6 +73,7 @@ pipeline {
         stage('Approval') {
             steps {
                 script {
+                    timeout(time:15, unit: 'MINUTES')
                     input message: 'Approve Terraform Apply?', ok: 'Proceed'
                 }
             }
@@ -82,6 +84,37 @@ pipeline {
                 script {
                     echo 'Applying Terraform changes...'
                     sh 'terraform apply -auto-approve -no-color tfplan'
+                }
+            }
+        }
+        
+        stage('Terraform Destroy Plan'){
+            when { expression { params.Terraform_Destroy == 'true' } }
+            steps{
+                script {
+                    echo 'Generating Terraform destroy plan...'
+                    sh 'terraform plan -destroy -out=tfplandestory -no-color > /dev/null 2>&1'
+                    sh 'terraform show -no-color tfplandestory'
+                }
+            }
+        }
+        
+        stage('Approval'){
+            when { expression { params.Terraform_Destroy == 'true' } }
+            steps{
+                script{
+                    timeout(time:15, unit: 'MINUTES'){
+                    input message: 'Approve terraform destroy?', ok: 'Proceed'
+                    }
+                }
+            }
+        }
+
+        stage('Terraform Destroy Apply'){
+            when { expression { params.Terraform_Destroy == 'true' } }
+            steps{
+                script{
+                    sh 'terraform apply -auto-approve -no-color tfplandestroy'
                 }
             }
         }
