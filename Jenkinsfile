@@ -99,7 +99,7 @@ pipeline {
             }
         }
         
-        stage('Approval'){
+        stage('Approval Destroy'){
             when { expression { params.Terraform_Destroy == 'true' } }
             steps{
                 script{
