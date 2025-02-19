@@ -44,7 +44,7 @@ pipeline {
 
         stage('Terraform Init') {
             steps {
-                dir('ec2_instance') { 
+                dir('environment') { 
                     sh '''
                         set -e
                         echo 'Initializing Terraform...'
@@ -57,7 +57,7 @@ pipeline {
         stage('Terraform Plan') {
             when { expression { params.Terraform_Destroy == 'false' } }
             steps {
-                dir('ec2_instance') {
+                dir('environment') {
                     sh '''
                         set -e
                         echo 'Generating Terraform plan...'
@@ -83,7 +83,7 @@ pipeline {
         stage('Terraform Apply') {
             when { expression { params.Terraform_Destroy == 'false' } }
             steps {
-                dir('ec2_instance') {
+                dir('environment') {
                     sh '''
                         set -e
                         echo 'Applying Terraform changes...'
@@ -96,7 +96,7 @@ pipeline {
         stage('Terraform Destroy Plan') {
             when { expression { params.Terraform_Destroy == 'true' } }
             steps {
-                dir('ec2_instance') {
+                dir('environment') {
                     sh '''
                         set -e
                         echo 'Generating Terraform Destroy Plan...'
@@ -122,7 +122,7 @@ pipeline {
         stage('Terraform Destroy Apply') {
             when { expression { params.Terraform_Destroy == 'true' } }
             steps {
-                dir('ec2_instance') {
+                dir('environment') {
                     sh '''
                         set -e
                         echo 'Destroying Terraform infrastructure...'
