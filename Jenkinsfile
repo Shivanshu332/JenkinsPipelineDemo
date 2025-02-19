@@ -6,26 +6,27 @@ pipeline {
     }
 
     triggers {
-        pollSCM '* * * * *'
+        pollSCM('H/5 * * * *')
     }
     
     parameters {
         string(name: 'REPO_URL', defaultValue: 'https://github.com/Shivanshu332/terraformAWSdemo.git', description: 'GitHub repository URL')
         string(name: 'BRANCH', defaultValue: 'test', description: 'Branch name to checkout')
-		string(name: 'AWS_Region', defaultValue: 'ap-south-1', description: 'Default AWS region')
-        choice(name: 'Terraform_Destroy', choices: ['false', 'true'], description: 'Select if you want to destroy terraform resources')
+        string(name: 'AWS_Region', defaultValue: 'ap-south-1', description: 'AWS region')
+        choice(name: 'environment', choices: ['dev', 'sit', 'uat', 'pre', 'prod'], description: 'choose the environment to deploy')
+        choice(name: 'Terraform_Destroy', choices: ['false', 'true'], description: 'Destroy Terraform resources?')
     }
 
     environment {
         AWS_DEFAULT_REGION = "${params.AWS_Region}"
+        TF_VAR_file = "environment/${params.environment}/terraform.tfvars"
     }
 
     stages {
         stage('Checkout Code') {
             steps {
                 script {
-                    // Checking out the code from the GitHub repository
-                    echo "Cloning repository ${params.REPO_URL} (branch: ${params.BRANCH})"
+                    echo "Cloning repository: ${params.REPO_URL} (Branch: ${params.BRANCH})"
                     checkout([$class: 'GitSCM', branches: [[name: "*/${params.BRANCH}"]], userRemoteConfigs: [[url: params.REPO_URL]]])
                 }
             }
@@ -34,17 +35,8 @@ pipeline {
         stage('Set AWS Credentials') {
             steps {
                 script {
-                    // Using the AWS credentials stored in Jenkins
                     withCredentials([aws(accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'aws-credentials', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
-                        echo 'AWS Credentials are set.'
-                        
-                        // Explicitly export the credentials so they are available to subsequent shell commands
-                        sh '''
-                            # Run the AWS CLI configure commands
-                            aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
-                            aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
-                            aws configure set region $AWS_DEFAULT_REGION
-                        '''
+                        echo 'AWS Credentials are set as environment variables.'
                     }
                 }
             }
@@ -53,9 +45,11 @@ pipeline {
         stage('Terraform Init') {
             steps {
                 script {
-                    // Run terraform init to initialize the Terraform working directory
-                    echo 'Running terraform init...'
-                    sh 'terraform init'
+                    sh '''
+                        set -e
+                        echo 'Initializing Terraform...'
+                        terraform init
+                    '''
                 }
             }
         }
@@ -64,19 +58,23 @@ pipeline {
             when { expression { params.Terraform_Destroy == 'false' } }
             steps {
                 script {
-                    // Run terraform plan
-                    echo 'Running terraform plan...'
-                    sh 'terraform plan -out=tfplan >> /dev/null'
-                    sh 'terraform show -no-color tfplan'
+                    sh '''
+                        set -e
+                        echo 'Generating Terraform plan...'
+                        terraform plan -var-file=${TF_VAR_file} -out=tfplan
+                        echo 'Terraform Plan Output:'
+                        terraform show -no-color tfplan
+                    '''
                 }
             }
         }
+
         stage('Approval Apply') {
             when { expression { params.Terraform_Destroy == 'false' } }
             steps {
                 script {
-                    timeout(time:15, unit: 'MINUTES'){
-                    input message: 'Approve Terraform Apply?', ok: 'Proceed'
+                    timeout(time: 15, unit: 'MINUTES') {
+                        input message: 'Approve Terraform Apply?', ok: 'Proceed'
                     }
                 }
             }
@@ -86,39 +84,50 @@ pipeline {
             when { expression { params.Terraform_Destroy == 'false' } }
             steps {
                 script {
-                    echo 'Applying Terraform changes...'
-                    sh 'terraform apply -auto-approve -no-color tfplan'
+                    sh '''
+                        set -e
+                        echo 'Applying Terraform changes...'
+                        terraform apply -auto-approve tfplan
+                    '''
                 }
             }
         }
         
-        stage('Terraform Destroy Plan'){
+        stage('Terraform Destroy Plan') {
             when { expression { params.Terraform_Destroy == 'true' } }
-            steps{
+            steps {
                 script {
-                    echo 'Generating Terraform destroy plan...'
-                    sh 'terraform plan -destroy -out=tfplandestroy -no-color > /dev/null 2>&1'
-                    sh 'terraform show -no-color tfplandestroy'
+                    sh '''
+                        set -e
+                        echo 'Generating Terraform Destroy Plan...'
+                        terraform plan -destroy -out=tfplandestroy -var-file=${TF_VAR_file} | tee destroy_plan.log
+                        echo 'Terraform Destroy Plan Output:'
+                        terraform show -no-color tfplandestroy
+                    '''
                 }
             }
         }
-        
-        stage('Approval Destroy'){
+
+        stage('Approval Destroy') {
             when { expression { params.Terraform_Destroy == 'true' } }
-            steps{
-                script{
-                    timeout(time:15, unit: 'MINUTES'){
-                    input message: 'Approve terraform destroy?', ok: 'Proceed'
+            steps {
+                script {
+                    timeout(time: 15, unit: 'MINUTES') {
+                        input message: 'Approve Terraform Destroy?', ok: 'Proceed'
                     }
                 }
             }
         }
 
-        stage('Terraform Destroy Apply'){
+        stage('Terraform Destroy Apply') {
             when { expression { params.Terraform_Destroy == 'true' } }
-            steps{
-                script{
-                    sh 'terraform apply -auto-approve -no-color tfplandestroy'
+            steps {
+                script {
+                    sh '''
+                        set -e
+                        echo 'Destroying Terraform infrastructure...'
+                        terraform apply -auto-approve tfplandestroy
+                    '''
                 }
             }
         }
