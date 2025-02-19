@@ -19,7 +19,7 @@ pipeline {
 
     environment {
         AWS_DEFAULT_REGION = "${params.AWS_Region}"
-        TF_VAR_file = "/${params.environment}/terraform.tfvars"
+        TF_VAR_file = "dev/terraform.tfvars" 
     }
 
     stages {
@@ -32,19 +32,21 @@ pipeline {
             }
         }
 
-        stage('Set AWS Credentials') {
+        stage('Verify Terraform Files') {
             steps {
-                script {
-                    withCredentials([aws(accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'aws-credentials', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
-                        echo 'AWS Credentials are set as environment variables.'
-                    }
+                dir("environment") { 
+                    sh '''
+                        set -e
+                        echo "Checking if Terraform files exist..."
+                        ls -lah
+                    '''
                 }
             }
         }
 
         stage('Terraform Init') {
             steps {
-                dir('environment') { 
+                dir("environment") {
                     sh '''
                         set -e
                         echo 'Initializing Terraform...'
@@ -57,7 +59,7 @@ pipeline {
         stage('Terraform Plan') {
             when { expression { params.Terraform_Destroy == 'false' } }
             steps {
-                dir('environment') {
+                dir("environment") {  
                     sh '''
                         set -e
                         echo 'Generating Terraform plan...'
@@ -83,7 +85,7 @@ pipeline {
         stage('Terraform Apply') {
             when { expression { params.Terraform_Destroy == 'false' } }
             steps {
-                dir('environment') {
+                dir("environment") {
                     sh '''
                         set -e
                         echo 'Applying Terraform changes...'
@@ -96,7 +98,7 @@ pipeline {
         stage('Terraform Destroy Plan') {
             when { expression { params.Terraform_Destroy == 'true' } }
             steps {
-                dir('environment') {
+                dir("environment") { 
                     sh '''
                         set -e
                         echo 'Generating Terraform Destroy Plan...'
@@ -122,7 +124,7 @@ pipeline {
         stage('Terraform Destroy Apply') {
             when { expression { params.Terraform_Destroy == 'true' } }
             steps {
-                dir('environment') {
+                dir("environment") { 
                     sh '''
                         set -e
                         echo 'Destroying Terraform infrastructure...'
