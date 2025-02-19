@@ -19,7 +19,7 @@ pipeline {
 
     environment {
         AWS_DEFAULT_REGION = "${params.AWS_Region}"
-        TF_VAR_file = "../environment/${params.environment}/terraform.tfvars" 
+        TF_VAR_file = "../../environment/${params.environment}/terraform.tfvars"
     }
 
     stages {
