@@ -19,7 +19,7 @@ pipeline {
 
     environment {
         AWS_DEFAULT_REGION = "${params.AWS_Region}"
-        TF_VAR_file = "dev/terraform.tfvars" 
+        TF_VAR_file = "terraform.tfvars"  
     }
 
     stages {
@@ -34,7 +34,7 @@ pipeline {
 
         stage('Verify Terraform Files') {
             steps {
-                dir("environment") { 
+                dir("environment/${params.environment}") {  
                     sh '''
                         set -e
                         echo "Checking if Terraform files exist..."
@@ -46,7 +46,7 @@ pipeline {
 
         stage('Terraform Init') {
             steps {
-                dir("environment") {
+                dir("environment/${params.environment}") {  
                     sh '''
                         set -e
                         echo 'Initializing Terraform...'
@@ -59,7 +59,7 @@ pipeline {
         stage('Terraform Plan') {
             when { expression { params.Terraform_Destroy == 'false' } }
             steps {
-                dir("environment") {  
+                dir("environment/${params.environment}") {  
                     sh '''
                         set -e
                         echo 'Generating Terraform plan...'
@@ -85,7 +85,7 @@ pipeline {
         stage('Terraform Apply') {
             when { expression { params.Terraform_Destroy == 'false' } }
             steps {
-                dir("environment") {
+                dir("environment/${params.environment}") { 
                     sh '''
                         set -e
                         echo 'Applying Terraform changes...'
@@ -98,7 +98,7 @@ pipeline {
         stage('Terraform Destroy Plan') {
             when { expression { params.Terraform_Destroy == 'true' } }
             steps {
-                dir("environment") { 
+                dir("environment/${params.environment}") {  
                     sh '''
                         set -e
                         echo 'Generating Terraform Destroy Plan...'
@@ -124,7 +124,7 @@ pipeline {
         stage('Terraform Destroy Apply') {
             when { expression { params.Terraform_Destroy == 'true' } }
             steps {
-                dir("environment") { 
+                dir("environment/${params.environment}") { 
                     sh '''
                         set -e
                         echo 'Destroying Terraform infrastructure...'
