@@ -31,15 +31,21 @@ pipeline {
                 }
             }
         }
-
-        stage('Verify Terraform Files') {
+        stage('Set AWS Credentials') {
             steps {
-                dir("environment/${params.environment}") {  
-                    sh '''
-                        set -e
-                        echo "Checking if Terraform files exist..."
-                        ls -lah
-                    '''
+                script {
+                    
+                    withCredentials([aws(accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'aws-credentials', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                        echo 'AWS Credentials are set.'
+                        
+                        sh '''
+                            # Run the AWS CLI configure commands
+                            aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+                            aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+                            aws configure set region $AWS_DEFAULT_REGION
+                        '''
+                        echo 'AWS Credentials are set as environment variables.'
+                    }
                 }
             }
         }
