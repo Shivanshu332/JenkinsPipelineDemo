@@ -13,13 +13,13 @@ pipeline {
         string(name: 'REPO_URL', defaultValue: 'https://github.com/Shivanshu332/terraformAWSdemo.git', description: 'GitHub repository URL')
         string(name: 'BRANCH', defaultValue: 'test', description: 'Branch name to checkout')
         string(name: 'AWS_Region', defaultValue: 'ap-south-1', description: 'AWS region')
-        choice(name: 'environment', choices: ['dev', 'sit', 'uat', 'pre', 'prod'], description: 'choose the environment to deploy')
+        choice(name: 'environment', choices: ['dev', 'sit', 'uat', 'pre', 'prod'], description: 'Choose the environment to deploy')
         choice(name: 'Terraform_Destroy', choices: ['false', 'true'], description: 'Destroy Terraform resources?')
     }
 
     environment {
         AWS_DEFAULT_REGION = "${params.AWS_Region}"
-        TF_VAR_file = "environment/${params.environment}/terraform.tfvars"
+        TF_VAR_file = "../environment/${params.environment}/terraform.tfvars" 
     }
 
     stages {
@@ -44,7 +44,7 @@ pipeline {
 
         stage('Terraform Init') {
             steps {
-                script {
+                dir('ec2_instance') { 
                     sh '''
                         set -e
                         echo 'Initializing Terraform...'
@@ -57,7 +57,7 @@ pipeline {
         stage('Terraform Plan') {
             when { expression { params.Terraform_Destroy == 'false' } }
             steps {
-                script {
+                dir('ec2_instance') {
                     sh '''
                         set -e
                         echo 'Generating Terraform plan...'
@@ -83,7 +83,7 @@ pipeline {
         stage('Terraform Apply') {
             when { expression { params.Terraform_Destroy == 'false' } }
             steps {
-                script {
+                dir('ec2_instance') {
                     sh '''
                         set -e
                         echo 'Applying Terraform changes...'
@@ -96,7 +96,7 @@ pipeline {
         stage('Terraform Destroy Plan') {
             when { expression { params.Terraform_Destroy == 'true' } }
             steps {
-                script {
+                dir('ec2_instance') {
                     sh '''
                         set -e
                         echo 'Generating Terraform Destroy Plan...'
@@ -122,7 +122,7 @@ pipeline {
         stage('Terraform Destroy Apply') {
             when { expression { params.Terraform_Destroy == 'true' } }
             steps {
-                script {
+                dir('ec2_instance') {
                     sh '''
                         set -e
                         echo 'Destroying Terraform infrastructure...'
