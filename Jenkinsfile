@@ -69,7 +69,7 @@ pipeline {
                     sh '''
                         set -e
                         echo 'Generating Terraform plan...'
-                        terraform plan -var-file=${TF_VAR_file} -out=tfplan
+                        terraform plan -var-file=${TF_VAR_file} -no-color -out=tfplan
                         echo 'Terraform Plan Output:'
                         terraform show -no-color tfplan
                     '''
